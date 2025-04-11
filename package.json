@@ -1,5 +1,5 @@
 {
-  "name": "hyperapi",
+  "name": "hyper-interface",
   "version": "1.0.0",
   "main": "definition.js",
   "files": [
