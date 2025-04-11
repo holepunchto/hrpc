@@ -33,6 +33,8 @@ module.exports = class HyperInterface {
     this.handlersById = new Map()
     this.handlers = []
 
+    this.currentOffset = this.offset || 0
+
     this.changed = false
     this.initializing = true
     if (interfaceJson) {

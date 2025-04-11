@@ -1,7 +1,6 @@
 {
   "name": "hyper-interface",
   "version": "1.0.0",
-  "main": "definition.js",
   "files": [
     "lib/*.js",
     "builder.mjs",
@@ -21,7 +20,7 @@
     }
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "brittle test/*.test.js"
   },
   "keywords": [],
   "author": "",
@@ -29,11 +28,12 @@
   "description": "",
   "dependencies": {
     "bare-rpc": "^0.2.0",
-    "bare-stream": "^2.6.5",
+    "brittle": "^3.13.1",
     "hyperschema": "^1.10.4",
     "streamx": "^2.22.0"
   },
   "devDependencies": {
+    "bare-stream": "^2.6.5",
     "standard": "^17.1.2"
   }
 }
