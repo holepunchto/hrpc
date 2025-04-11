@@ -1,0 +1,39 @@
+{
+  "name": "hyperapi",
+  "version": "1.0.0",
+  "main": "definition.js",
+  "files": [
+    "lib/*.js",
+    "builder.mjs",
+    "builder.cjs",
+    "runtime.mjs",
+    "runtime.cjs"
+  ],
+  "exports": {
+    "./package": "./package.json",
+    ".": {
+      "import": "./builder.mjs",
+      "require": "./builder.cjs"
+    },
+    "./runtime": {
+      "import": "./runtime.mjs",
+      "require": "./runtime.cjs"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bare-rpc": "^0.2.0",
+    "bare-stream": "^2.6.5",
+    "hyperschema": "^1.10.4",
+    "streamx": "^2.22.0"
+  },
+  "devDependencies": {
+    "standard": "^17.1.2"
+  }
+}
