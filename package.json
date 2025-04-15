@@ -8,6 +8,16 @@
     "runtime.mjs",
     "runtime.cjs"
   ],
+  "imports": {
+    "path": {
+      "bare": "bare-path",
+      "default": "path"
+    },
+    "fs": {
+      "bare": "bare-fs",
+      "default": "fs"
+    }
+  },
   "exports": {
     "./package": "./package.json",
     ".": {
@@ -20,7 +30,8 @@
     }
   },
   "scripts": {
-    "test": "brittle test/*.test.js"
+    "test": "brittle test/*.test.js",
+    "test:bare": "bare test/index.test.js"
   },
   "keywords": [],
   "author": "",
@@ -33,6 +44,8 @@
     "streamx": "^2.22.0"
   },
   "devDependencies": {
+    "bare-fs": "^4.1.2",
+    "bare-path": "^3.0.0",
     "bare-stream": "^2.6.5",
     "standard": "^17.1.2"
   }
