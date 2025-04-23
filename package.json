@@ -38,6 +38,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "b4a": "^1.6.7",
     "bare-rpc": "^0.2.0",
     "brittle": "^3.13.1",
     "hyperschema": "^1.10.4",
