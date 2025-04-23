@@ -15,10 +15,10 @@ test.hook('copy runtime', async () => {
   await fs.promises.copyFile(p.resolve(dir, '../runtime.cjs'), runtimePath)
 })
 
-test('basic interface', async (t) => {
+test.solo('basic interface', async (t) => {
   t.plan(8)
   t.teardown(() => {
-    fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
+    // fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
   })
 
   registerSchema()
