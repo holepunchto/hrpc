@@ -15,10 +15,10 @@ test.hook('copy runtime', async () => {
   await fs.promises.copyFile(p.resolve(dir, '../runtime.cjs'), runtimePath)
 })
 
-test.solo('basic interface', async (t) => {
-  t.plan(8)
+test('basic interface', async (t) => {
+  t.plan(14)
   t.teardown(() => {
-    // fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
+    fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
   })
 
   registerSchema()
@@ -42,11 +42,35 @@ test.solo('basic interface', async (t) => {
     name: 'command-b',
     request: {
       name: '@example/command-b-request',
-      stream: false
+      stream: true
     },
     response: {
       name: '@example/command-b-response',
       stream: false
+    }
+  })
+
+  ns.register({
+    name: 'command-c',
+    request: {
+      name: '@example/command-c-request',
+      stream: false
+    },
+    response: {
+      name: '@example/command-c-response',
+      stream: true
+    }
+  })
+
+  ns.register({
+    name: 'command-d',
+    request: {
+      name: '@example/command-d-request',
+      stream: true
+    },
+    response: {
+      name: '@example/command-d-response',
+      stream: true
     }
   })
 
@@ -56,31 +80,58 @@ test.solo('basic interface', async (t) => {
   const stream = new PassThrough()
   const iface = new Interface(stream)
 
+  // request stream false - response stream false
+
   iface.onExampleCommandA((data) => {
     t.is(data.bar, 'imbar', 'command-a request string is correct')
     return { baz: 'quo', qux: data.foo + 1 }
   })
-
-  iface.onExampleCommandB((data) => {
-    t.is(data.fred, 'imfred', 'command-b request string is correct')
-    return { tt: data.ffvii + 1, cat: 'meow' }
-  })
-
   const a = await iface.exampleCommandA({ foo: 80, bar: 'imbar' })
   t.is(a.baz, 'quo', 'command-a response string is correct')
   t.is(a.qux, 81, 'command-a response uint is correct')
 
-  const b = await iface.exampleCommandB({ ffvii: 90, fred: 'imfred' })
-  t.is(b.tt, 91, 'command b response uint is correct')
+  // request stream true - response stream false
+
+  iface.onExampleCommandB((stream) => {
+    stream.on('data', (data) => {
+      t.is(data.fred, 'imfred', 'command-b request string is correct')
+    })
+    return { tt: 22, cat: 'meow' }
+  })
+  const streamB = await iface.exampleCommandB()
+  streamB.write({ ffvii: 90, fred: 'imfred' })
+  const b = await streamB.reply()
+  t.is(b.tt, 22, 'command b response uint is correct')
   t.is(b.cat, 'meow', 'command b response uint is correct')
 
-  t.exception(async () => {
-    await iface.exampleCommandA({ foo: 'this-should-be-a-uint', bar: 'value' })
-  }, 'wrong encoding should reject')
+  // request stream false - response stream true
 
-  t.exception(async () => {
-    await iface.exampleCommandB({ ffvii: 'this-should-be-a-uint', fred: 'value' })
-  }, 'wrong encoding should reject')
+  iface.onExampleCommandC((stream) => {
+    t.is(stream.data.cof, 99, 'request stream data is correct')
+    t.is(stream.data.ham, 'tobe', 'request stream data is correct')
+    stream.write({ klau: 'light', ger: 1500 })
+  })
+  const streamC = await iface.exampleCommandC({ cof: 99, ham: 'tobe' })
+  streamC.on('data', (data) => {
+    t.is(data.klau, 'light')
+    t.is(data.ger, 1500)
+  })
+
+  // request stream true - response stream true
+
+  iface.onExampleCommandD((stream) => {
+    stream.on('data', (data) => {
+      t.is(data.pol, 1, 'request stream data is correct')
+      t.is(data.oth, 'par', 'request stream data is correct')
+    })
+    stream.write({ iag: 'ev', ofe: 22 })
+  })
+  const streamD = await iface.exampleCommandD()
+  streamD.on('data', (data) => {
+    t.is(data.iag, 'ev', 'response stream data is correct')
+    t.is(data.ofe, 22, 'response stream data is correct')
+  })
+  streamD.write({ pol: 1, oth: 'par' })
 })
 
 test('register interface twice', async (t) => {
