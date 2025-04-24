@@ -9,26 +9,26 @@ const generateCode = require('./lib/codegen')
 
 const CODE_FILE_NAME = 'index.js'
 const MESSAGES_FILE_NAME = 'messages.js'
-const INTERFACE_JSON_FILE_NAME = 'interface.json'
+const HRPC_JSON_FILE_NAME = 'hrpc.json'
 
-class HyperInterfaceNamespace {
-  constructor (hyperInterface, name) {
-    this.hyperInterface = hyperInterface
+class HRPCNamespace {
+  constructor (hrpc, name) {
+    this.hrpc = hrpc
     this.name = name
   }
 
   register (description) {
     const fqn = '@' + this.name + '/' + description.name
-    this.hyperInterface.register(fqn, description)
+    this.hrpc.register(fqn, description)
   }
 }
 
-module.exports = class HyperInterface {
-  constructor (schema, interfaceJson, { offset, interfaceDir = null, schemaDir = null } = {}) {
+module.exports = class HRPC {
+  constructor (schema, hrpcJson, { offset, hrpcDir = null, schemaDir = null } = {}) {
     this.schema = schema
-    this.version = interfaceJson ? interfaceJson.version : 0
-    this.offset = interfaceJson ? interfaceJson.offset : (offset || 0)
-    this.interfaceDir = interfaceDir
+    this.version = hrpcJson ? hrpcJson.version : 0
+    this.offset = hrpcJson ? hrpcJson.offset : (offset || 0)
+    this.hrpcDir = hrpcDir
     this.schemaDir = schemaDir
 
     this.namespaces = new Map()
@@ -41,9 +41,9 @@ module.exports = class HyperInterface {
 
     this.changed = false
     this.initializing = true
-    if (interfaceJson) {
-      for (let i = 0; i < interfaceJson.schema.length; i++) {
-        const description = interfaceJson.schema[i]
+    if (hrpcJson) {
+      for (let i = 0; i < hrpcJson.schema.length; i++) {
+        const description = hrpcJson.schema[i]
         this.register(description.name, description)
       }
     }
@@ -51,7 +51,7 @@ module.exports = class HyperInterface {
   }
 
   namespace (name) {
-    return new HyperInterfaceNamespace(this, name)
+    return new HRPCNamespace(this, name)
   }
 
   register (fqn, description) {
@@ -120,10 +120,10 @@ module.exports = class HyperInterface {
     }
   }
 
-  static from (schemaJson, interfaceJson, opts) {
+  static from (schemaJson, hrpcJson, opts) {
     const schema = Hyperschema.from(schemaJson)
-    if (typeof interfaceJson === 'string') {
-      const jsonFilePath = p.join(p.resolve(interfaceJson), INTERFACE_JSON_FILE_NAME)
+    if (typeof hrpcJson === 'string') {
+      const jsonFilePath = p.join(p.resolve(hrpcJson), HRPC_JSON_FILE_NAME)
       let exists = false
       try {
         fs.statSync(jsonFilePath)
@@ -131,34 +131,34 @@ module.exports = class HyperInterface {
       } catch (err) {
         if (err.code !== 'ENOENT') throw err
       }
-      opts = { ...opts, interfaceDir: interfaceJson, schemaDir: schemaJson }
+      opts = { ...opts, hrpcDir: hrpcJson, schemaDir: schemaJson }
       if (exists) return new this(schema, JSON.parse(fs.readFileSync(jsonFilePath)), opts)
       return new this(schema, null, opts)
     }
-    return new this(schema, interfaceJson, opts)
+    return new this(schema, hrpcJson, opts)
   }
 
   toCode ({ esm = this.constructor.esm, filename } = {}) {
     return generateCode(this, { esm, filename })
   }
 
-  static toDisk (hyperInterface, interfaceDir, opts = {}) {
-    if (typeof interfaceDir === 'object' && interfaceDir) {
-      opts = interfaceDir
-      interfaceDir = null
+  static toDisk (hrpc, hrpcDir, opts = {}) {
+    if (typeof hrpcDir === 'object' && hrpcDir) {
+      opts = hrpcDir
+      hrpcDir = null
     }
     if (typeof opts.esm === 'undefined') {
       opts = { ...opts, esm: this.esm }
     }
-    if (!interfaceDir) interfaceDir = hyperInterface.interfaceDir
-    fs.mkdirSync(interfaceDir, { recursive: true })
+    if (!hrpcDir) hrpcDir = hrpc.hrpcDir
+    fs.mkdirSync(hrpcDir, { recursive: true })
 
-    const messagesPath = p.join(p.resolve(interfaceDir), MESSAGES_FILE_NAME)
-    const interfaceJsonPath = p.join(p.resolve(interfaceDir), INTERFACE_JSON_FILE_NAME)
-    const codePath = p.join(p.resolve(interfaceDir), CODE_FILE_NAME)
+    const messagesPath = p.join(p.resolve(hrpcDir), MESSAGES_FILE_NAME)
+    const hrpcJsonPath = p.join(p.resolve(hrpcDir), HRPC_JSON_FILE_NAME)
+    const codePath = p.join(p.resolve(hrpcDir), CODE_FILE_NAME)
 
-    fs.writeFileSync(interfaceJsonPath, JSON.stringify(hyperInterface.toJSON(), null, 2), { encoding: 'utf-8' })
-    fs.writeFileSync(messagesPath, hyperInterface.schema.toCode(opts), { encoding: 'utf-8' })
-    fs.writeFileSync(codePath, generateCode(hyperInterface, opts), { encoding: 'utf-8' })
+    fs.writeFileSync(hrpcJsonPath, JSON.stringify(hrpc.toJSON(), null, 2), { encoding: 'utf-8' })
+    fs.writeFileSync(messagesPath, hrpc.schema.toCode(opts), { encoding: 'utf-8' })
+    fs.writeFileSync(codePath, generateCode(hrpc, opts), { encoding: 'utf-8' })
   }
 }

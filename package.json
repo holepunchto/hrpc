@@ -1,5 +1,5 @@
 {
-  "name": "hyperinterface",
+  "name": "hrpc",
   "version": "1.0.0",
   "files": [
     "lib/*.js",

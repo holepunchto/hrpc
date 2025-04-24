@@ -3,16 +3,16 @@ const fs = require('fs')
 const test = require('brittle')
 const { PassThrough } = require('bare-stream')
 const { registerSchema } = require('./helper.js')
-const HyperInterfaceBuilder = require('../builder.cjs')
+const HRPCBuilder = require('../builder.cjs')
 
 const SCHEMA_DIR = p.join(__dirname, 'spec', 'hyperschema')
-const INTERFACE_DIR = p.join(__dirname, 'spec', 'hyperinterface')
+const HRPC_DIR = p.join(__dirname, 'spec', 'hrpc')
 
 test.hook('copy runtime', async () => {
   const dir = __dirname
-  const runtimePath = p.join(dir, 'node_modules', 'hyperinterface', 'runtime.cjs')
-  const runtimePathEsm = p.join(dir, 'node_modules', 'hyperinterface', 'runtime.mjs')
-  const runtimeLibPath = p.join(dir, 'node_modules', 'hyperinterface', 'lib', 'stream.js')
+  const runtimePath = p.join(dir, 'node_modules', 'hrpc', 'runtime.cjs')
+  const runtimePathEsm = p.join(dir, 'node_modules', 'hrpc', 'runtime.mjs')
+  const runtimeLibPath = p.join(dir, 'node_modules', 'hrpc', 'lib', 'stream.js')
   await fs.promises.mkdir(p.dirname(runtimePath), { recursive: true })
   await fs.promises.mkdir(p.dirname(runtimeLibPath), { recursive: true })
   await fs.promises.copyFile(p.resolve(dir, '../runtime.cjs'), runtimePath)
@@ -20,7 +20,7 @@ test.hook('copy runtime', async () => {
   await fs.promises.copyFile(p.resolve(dir, '..', 'lib', 'stream.js'), runtimeLibPath)
 })
 
-test('basic interface', async (t) => {
+test('basic rpc', async (t) => {
   t.plan(16)
   t.teardown(async () => {
     await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
@@ -28,8 +28,8 @@ test('basic interface', async (t) => {
 
   registerSchema()
 
-  const hyperInterface = HyperInterfaceBuilder.from(SCHEMA_DIR, INTERFACE_DIR)
-  const ns = hyperInterface.namespace('example')
+  const hrpc = HRPCBuilder.from(SCHEMA_DIR, HRPC_DIR)
+  const ns = hrpc.namespace('example')
 
   ns.register({
     name: 'command-a',
@@ -87,31 +87,31 @@ test('basic interface', async (t) => {
     }
   })
 
-  HyperInterfaceBuilder.toDisk(hyperInterface)
+  HRPCBuilder.toDisk(hrpc)
 
-  const HyperInterface = require(INTERFACE_DIR)
+  const HRPC = require(HRPC_DIR)
   const stream = new PassThrough()
-  const iface = new HyperInterface(stream)
+  const rpc = new HRPC(stream)
 
   // request stream false - response stream false
 
-  iface.onExampleCommandA((data) => {
+  rpc.onExampleCommandA((data) => {
     t.is(data.bar, 'imbar', 'command-a request string is correct')
     return { baz: 'quo', qux: data.foo + 1 }
   })
-  const a = await iface.exampleCommandA({ foo: 80, bar: 'imbar' })
+  const a = await rpc.exampleCommandA({ foo: 80, bar: 'imbar' })
   t.is(a.baz, 'quo', 'command-a response string is correct')
   t.is(a.qux, 81, 'command-a response uint is correct')
 
   // request stream true - response stream false
 
-  iface.onExampleCommandB((stream) => {
+  rpc.onExampleCommandB((stream) => {
     stream.on('data', (data) => {
       t.is(data.fred, 'imfred', 'command-b request string is correct')
     })
     return { tt: 22, cat: 'meow' }
   })
-  const streamB = iface.exampleCommandB()
+  const streamB = rpc.exampleCommandB()
   streamB.write({ ffvii: 90, fred: 'imfred' })
   const b = await streamB.reply()
   t.is(b.tt, 22, 'command b response uint is correct')
@@ -119,12 +119,12 @@ test('basic interface', async (t) => {
 
   // request stream false - response stream true
 
-  iface.onExampleCommandC((stream) => {
+  rpc.onExampleCommandC((stream) => {
     t.is(stream.data.cof, 99, 'request stream data is correct')
     t.is(stream.data.ham, 'tobe', 'request stream data is correct')
     stream.write({ klau: 'light', ger: 1500 })
   })
-  const streamC = iface.exampleCommandC({ cof: 99, ham: 'tobe' })
+  const streamC = rpc.exampleCommandC({ cof: 99, ham: 'tobe' })
   streamC.on('data', (data) => {
     t.is(data.klau, 'light')
     t.is(data.ger, 1500)
@@ -132,14 +132,14 @@ test('basic interface', async (t) => {
 
   // request stream true - response stream true
 
-  iface.onExampleCommandD((stream) => {
+  rpc.onExampleCommandD((stream) => {
     stream.on('data', (data) => {
       t.is(data.pol, 1, 'request stream data is correct')
       t.is(data.oth, 'par', 'request stream data is correct')
     })
     stream.write({ iag: 'ev', ofe: 22 })
   })
-  const streamD = iface.exampleCommandD()
+  const streamD = rpc.exampleCommandD()
   streamD.on('data', (data) => {
     t.is(data.iag, 'ev', 'response stream data is correct')
     t.is(data.ofe, 22, 'response stream data is correct')
@@ -148,15 +148,15 @@ test('basic interface', async (t) => {
 
   // send: true
 
-  iface.onExampleCommandE((data) => {
+  rpc.onExampleCommandE((data) => {
     t.is(data.mac, 1, 'request send data is correct')
     t.is(data.earl, 2, 'request send data is correct')
   })
 
-  iface.exampleCommandE({ mac: 1, earl: 2 })
+  rpc.exampleCommandE({ mac: 1, earl: 2 })
 })
 
-test('register interface twice', async (t) => {
+test('register rpc twice', async (t) => {
   t.plan(4)
   t.teardown(async () => {
     await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
@@ -164,8 +164,8 @@ test('register interface twice', async (t) => {
 
   registerSchema()
 
-  const hyperInterfaceA = HyperInterfaceBuilder.from(SCHEMA_DIR, INTERFACE_DIR)
-  const ns1 = hyperInterfaceA.namespace('example')
+  const hrpcA = HRPCBuilder.from(SCHEMA_DIR, HRPC_DIR)
+  const ns1 = hrpcA.namespace('example')
 
   ns1.register({
     name: 'command-a',
@@ -179,10 +179,10 @@ test('register interface twice', async (t) => {
     }
   })
 
-  HyperInterfaceBuilder.toDisk(hyperInterfaceA)
+  HRPCBuilder.toDisk(hrpcA)
 
-  const hyperInterfaceB = HyperInterfaceBuilder.from(SCHEMA_DIR, INTERFACE_DIR)
-  const ns2 = hyperInterfaceB.namespace('example')
+  const hrpcB = HRPCBuilder.from(SCHEMA_DIR, HRPC_DIR)
+  const ns2 = hrpcB.namespace('example')
 
   t.exception(() => {
     ns2.register({

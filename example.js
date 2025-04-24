@@ -1,10 +1,10 @@
 const p = require('path')
 const Hyperschema = require('hyperschema')
-const HyperInterfaceBuilder = require('hyperinterface')
+const HRPCBuilder = require('hrpc')
 const { PassThrough } = require('bare-stream')
 
 const SCHEMA_DIR = p.join(__dirname, 'spec', 'hyperschema')
-const INTERFACE_DIR = p.join(__dirname, 'spec', 'hyperinterface')
+const HRPC_DIR = p.join(__dirname, 'spec', 'hrpc')
 
 const schema = Hyperschema.from(SCHEMA_DIR)
 const ns1 = schema.namespace('example')
@@ -27,8 +27,8 @@ ns1.register({
 
 Hyperschema.toDisk(schema)
 
-const hyperInterface = HyperInterfaceBuilder.from(SCHEMA_DIR, INTERFACE_DIR)
-const ns = hyperInterface.namespace('example')
+const hrpc = HRPCBuilder.from(SCHEMA_DIR, HRPC_DIR)
+const ns = hrpc.namespace('example')
 
 ns.register({
   name: 'command-a',
@@ -42,15 +42,15 @@ ns.register({
   }
 })
 
-HyperInterfaceBuilder.toDisk(hyperInterface)
+HRPCBuilder.toDisk(hrpc)
 
-const HyperInterface = require(INTERFACE_DIR)
+const HRPC = require(HRPC_DIR)
 const stream = new PassThrough()
-const iface = new HyperInterface(stream)
+const rpc = new HRPC(stream)
 
-iface.onExampleCommandA((data) => {
+rpc.onExampleCommandA((data) => {
   console.log('command A request:', data)
   return { baz: 'quo', qux: data.foo + 1 }
 })
 
-iface.exampleCommandA({ foo: 80, bar: 'imbar' }).then((response) => console.log('command A response:', response))
+rpc.exampleCommandA({ foo: 80, bar: 'imbar' }).then((response) => console.log('command A response:', response))

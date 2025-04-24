@@ -1,7 +1,7 @@
-import HyperInterface from './builder.cjs'
+import HRPC from './builder.cjs'
 
-class ESMHyperInterface extends HyperInterface {
+class ESMHRPC extends HRPC {
   static esm = true
 }
 
-export default ESMHyperInterface
+export default ESMHRPC
