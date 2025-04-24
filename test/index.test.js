@@ -11,8 +11,11 @@ const INTERFACE_DIR = p.join(__dirname, 'spec', 'hyperinterface')
 test.hook('copy runtime', async () => {
   const dir = __dirname
   const runtimePath = p.join(dir, 'node_modules', 'hyperinterface', 'runtime.cjs')
+  const runtimeLibPath = p.join(dir, 'node_modules', 'hyperinterface', 'lib', 'stream.js')
   await fs.promises.mkdir(p.dirname(runtimePath), { recursive: true })
+  await fs.promises.mkdir(p.dirname(runtimeLibPath), { recursive: true })
   await fs.promises.copyFile(p.resolve(dir, '../runtime.cjs'), runtimePath)
+  await fs.promises.copyFile(p.resolve(dir, '..', 'lib', 'stream.js'), runtimeLibPath)
 })
 
 test('basic interface', async (t) => {
