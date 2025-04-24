@@ -1,3 +1,7 @@
+/*
+  Based in hyperdispatch implementation: https://github.com/holepunchto/hyperdispatch/blob/main/builder.cjs
+*/
+
 const p = require('path')
 const fs = require('fs')
 const Hyperschema = require('hyperschema')
