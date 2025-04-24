@@ -22,8 +22,8 @@ test.hook('copy runtime', async () => {
 
 test('basic interface', async (t) => {
   t.plan(14)
-  t.teardown(() => {
-    fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
+  t.teardown(async () => {
+    await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
   })
 
   registerSchema()
@@ -141,8 +141,8 @@ test('basic interface', async (t) => {
 
 test('register interface twice', async (t) => {
   t.plan(4)
-  t.teardown(() => {
-    fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
+  t.teardown(async () => {
+    await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
   })
 
   registerSchema()
