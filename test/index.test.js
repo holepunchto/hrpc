@@ -101,7 +101,7 @@ test('basic interface', async (t) => {
     })
     return { tt: 22, cat: 'meow' }
   })
-  const streamB = await iface.exampleCommandB()
+  const streamB = iface.exampleCommandB()
   streamB.write({ ffvii: 90, fred: 'imfred' })
   const b = await streamB.reply()
   t.is(b.tt, 22, 'command b response uint is correct')
@@ -114,7 +114,7 @@ test('basic interface', async (t) => {
     t.is(stream.data.ham, 'tobe', 'request stream data is correct')
     stream.write({ klau: 'light', ger: 1500 })
   })
-  const streamC = await iface.exampleCommandC({ cof: 99, ham: 'tobe' })
+  const streamC = iface.exampleCommandC({ cof: 99, ham: 'tobe' })
   streamC.on('data', (data) => {
     t.is(data.klau, 'light')
     t.is(data.ger, 1500)
@@ -129,7 +129,7 @@ test('basic interface', async (t) => {
     })
     stream.write({ iag: 'ev', ofe: 22 })
   })
-  const streamD = await iface.exampleCommandD()
+  const streamD = iface.exampleCommandD()
   streamD.on('data', (data) => {
     t.is(data.iag, 'ev', 'response stream data is correct')
     t.is(data.ofe, 22, 'response stream data is correct')
