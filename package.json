@@ -1,5 +1,5 @@
 {
-  "name": "hyper-interface",
+  "name": "hyperinterface",
   "version": "1.0.0",
   "files": [
     "lib/*.js",
