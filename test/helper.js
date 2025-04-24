@@ -71,6 +71,14 @@ function registerSchema () {
     ]
   })
 
+  ns1.register({
+    name: 'command-e-request',
+    fields: [
+      { name: 'mac', type: 'uint' },
+      { name: 'earl', type: 'uint' }
+    ]
+  })
+
   Hyperschema.toDisk(schema)
 }
 

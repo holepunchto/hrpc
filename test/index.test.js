@@ -21,7 +21,7 @@ test.hook('copy runtime', async () => {
 })
 
 test('basic interface', async (t) => {
-  t.plan(14)
+  t.plan(16)
   t.teardown(async () => {
     await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
   })
@@ -76,6 +76,14 @@ test('basic interface', async (t) => {
     response: {
       name: '@example/command-d-response',
       stream: true
+    }
+  })
+
+  ns.register({
+    name: 'command-e',
+    request: {
+      name: '@example/command-e-request',
+      send: true
     }
   })
 
@@ -137,6 +145,15 @@ test('basic interface', async (t) => {
     t.is(data.ofe, 22, 'response stream data is correct')
   })
   streamD.write({ pol: 1, oth: 'par' })
+
+  // send: true
+
+  iface.onExampleCommandE((data) => {
+    t.is(data.mac, 1, 'request send data is correct')
+    t.is(data.earl, 2, 'request send data is correct')
+  })
+
+  iface.exampleCommandE({ mac: 1, earl: 2 })
 })
 
 test('register interface twice', async (t) => {
