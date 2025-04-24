@@ -3,7 +3,7 @@ const fs = require('fs')
 const test = require('brittle')
 const { PassThrough } = require('bare-stream')
 const { registerSchema } = require('./helper.js')
-const HyperInterface = require('../builder.cjs')
+const HyperInterfaceBuilder = require('../builder.cjs')
 
 const SCHEMA_DIR = p.join(__dirname, 'spec', 'hyperschema')
 const INTERFACE_DIR = p.join(__dirname, 'spec', 'hyperinterface')
@@ -11,10 +11,12 @@ const INTERFACE_DIR = p.join(__dirname, 'spec', 'hyperinterface')
 test.hook('copy runtime', async () => {
   const dir = __dirname
   const runtimePath = p.join(dir, 'node_modules', 'hyperinterface', 'runtime.cjs')
+  const runtimePathEsm = p.join(dir, 'node_modules', 'hyperinterface', 'runtime.mjs')
   const runtimeLibPath = p.join(dir, 'node_modules', 'hyperinterface', 'lib', 'stream.js')
   await fs.promises.mkdir(p.dirname(runtimePath), { recursive: true })
   await fs.promises.mkdir(p.dirname(runtimeLibPath), { recursive: true })
   await fs.promises.copyFile(p.resolve(dir, '../runtime.cjs'), runtimePath)
+  await fs.promises.copyFile(p.resolve(dir, '../runtime.mjs'), runtimePathEsm)
   await fs.promises.copyFile(p.resolve(dir, '..', 'lib', 'stream.js'), runtimeLibPath)
 })
 
@@ -26,7 +28,7 @@ test('basic interface', async (t) => {
 
   registerSchema()
 
-  const hyperInterface = HyperInterface.from(SCHEMA_DIR, INTERFACE_DIR)
+  const hyperInterface = HyperInterfaceBuilder.from(SCHEMA_DIR, INTERFACE_DIR)
   const ns = hyperInterface.namespace('example')
 
   ns.register({
@@ -77,11 +79,11 @@ test('basic interface', async (t) => {
     }
   })
 
-  HyperInterface.toDisk(hyperInterface)
+  HyperInterfaceBuilder.toDisk(hyperInterface)
 
-  const Interface = require(INTERFACE_DIR)
+  const HyperInterface = require(INTERFACE_DIR)
   const stream = new PassThrough()
-  const iface = new Interface(stream)
+  const iface = new HyperInterface(stream)
 
   // request stream false - response stream false
 
@@ -145,7 +147,7 @@ test('register interface twice', async (t) => {
 
   registerSchema()
 
-  const hyperInterfaceA = HyperInterface.from(SCHEMA_DIR, INTERFACE_DIR)
+  const hyperInterfaceA = HyperInterfaceBuilder.from(SCHEMA_DIR, INTERFACE_DIR)
   const ns1 = hyperInterfaceA.namespace('example')
 
   ns1.register({
@@ -160,9 +162,9 @@ test('register interface twice', async (t) => {
     }
   })
 
-  HyperInterface.toDisk(hyperInterfaceA)
+  HyperInterfaceBuilder.toDisk(hyperInterfaceA)
 
-  const hyperInterfaceB = HyperInterface.from(SCHEMA_DIR, INTERFACE_DIR)
+  const hyperInterfaceB = HyperInterfaceBuilder.from(SCHEMA_DIR, INTERFACE_DIR)
   const ns2 = hyperInterfaceB.namespace('example')
 
   t.exception(() => {

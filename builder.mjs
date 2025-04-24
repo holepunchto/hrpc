@@ -1,7 +1,7 @@
-import Hyperapi from './builder.cjs'
+import HyperInterface from './builder.cjs'
 
-class ESMHyperapi extends Hyperapi {
+class ESMHyperInterface extends HyperInterface {
   static esm = true
 }
 
-export default ESMHyperapi
+export default ESMHyperInterface
