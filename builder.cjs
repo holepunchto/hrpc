@@ -67,8 +67,11 @@ module.exports = class HyperInterface {
     const request = this.schema.resolve(description.request.name)
     if (!request) throw new Error('Invalid request type')
 
-    const response = this.schema.resolve(description.response.name)
-    if (!response) throw new Error('Invalid response type')
+    // send: true methods do not have response
+    if (description.response) {
+      const response = this.schema.resolve(description.response.name)
+      if (!response) throw new Error('Invalid response type')
+    }
 
     if (existingByName && (existingByName.request.name !== description.request.name)) {
       throw new Error('Cannot alter the request type for a handler')
@@ -78,12 +81,13 @@ module.exports = class HyperInterface {
       throw new Error('Cannot alter the request stream attribute for a handler')
     }
 
-    if (existingByName && (existingByName.response.name !== description.response.name)) {
-      throw new Error('Cannot alter the response type for a handler')
-    }
-
-    if (existingByName && (existingByName.response.stream !== description.response.stream)) {
-      throw new Error('Cannot alter the response stream attribute for a handler')
+    if (description.response) {
+      if (existingByName && (existingByName.response.name !== description.response.name)) {
+        throw new Error('Cannot alter the response type for a handler')
+      }
+      if (existingByName && (existingByName.response.stream !== description.response.stream)) {
+        throw new Error('Cannot alter the response stream attribute for a handler')
+      }
     }
 
     if (!this.initializing && !existingByName && !this.changed) {
