@@ -21,7 +21,7 @@ test.hook('copy runtime', async () => {
 })
 
 test('basic rpc', async (t) => {
-  t.plan(16)
+  t.plan(23)
   t.teardown(async () => {
     await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
   })
@@ -84,6 +84,38 @@ test('basic rpc', async (t) => {
     request: {
       name: '@example/command-e-request',
       send: true
+    }
+  })
+
+  ns.register({
+    name: 'command-f',
+    request: {
+      name: '@example/command-f-request',
+      send: true
+    }
+  })
+
+  ns.register({
+    name: 'command-g',
+    request: {
+      name: '@example/command-g-request',
+      stream: false
+    },
+    response: {
+      name: '@example/command-g-response',
+      stream: false
+    }
+  })
+
+  ns.register({
+    name: 'command-h',
+    request: {
+      name: '@example/command-h-request',
+      stream: false
+    },
+    response: {
+      name: '@example/command-h-response',
+      stream: true
     }
   })
 
@@ -154,6 +186,36 @@ test('basic rpc', async (t) => {
   })
 
   rpc.exampleCommandE({ mac: 1, earl: 2 })
+
+  // send: true, no args
+
+  rpc.onExampleCommandF((data) => {
+    t.is(data, null)
+  })
+
+  rpc.exampleCommandF()
+
+  // request stream false - response stream false, no args
+
+  rpc.onExampleCommandG((data) => {
+    t.is(data, null)
+    return { far: 99, boo: 'loo' }
+  })
+  const g = await rpc.exampleCommandG({ foo: 80, bar: 'imbar' })
+  t.is(g.boo, 'loo', 'command-g response string is correct')
+  t.is(g.far, 99, 'command-g response uint is correct')
+
+  // request stream false - response stream true, no args
+
+  rpc.onExampleCommandH((stream) => {
+    t.is(stream.data, null)
+    stream.write({ lee: 'paw', perry: 777 })
+  })
+  const streamH = rpc.exampleCommandH()
+  streamH.on('data', (data) => {
+    t.is(data.lee, 'paw')
+    t.is(data.perry, 777)
+  })
 })
 
 test('register rpc twice', async (t) => {

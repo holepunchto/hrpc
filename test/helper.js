@@ -79,6 +79,37 @@ function registerSchema () {
     ]
   })
 
+  ns1.register({
+    name: 'command-f-request',
+    fields: []
+  })
+
+  ns1.register({
+    name: 'command-g-request',
+    fields: []
+  })
+
+  ns1.register({
+    name: 'command-g-response',
+    fields: [
+      { name: 'boo', type: 'string' },
+      { name: 'far', type: 'uint' }
+    ]
+  })
+
+  ns1.register({
+    name: 'command-h-request',
+    fields: []
+  })
+
+  ns1.register({
+    name: 'command-h-response',
+    fields: [
+      { name: 'lee', type: 'string' },
+      { name: 'perry', type: 'uint' }
+    ]
+  })
+
   Hyperschema.toDisk(schema)
 }
 
