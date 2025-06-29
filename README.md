@@ -69,11 +69,11 @@ const { PassThrough } = require('bare-stream')
 const HRPC = require('./spec/hrpc') // generated rpc
 const rpc = new HRPC(stream)
 
-rpc.onExampleCommand((data) => {
+rpc.onCommand((data) => {
   return { bar: data.foo + 1 }
 })
 
-const res = await rpc.exampleCommand({ foo: 1 })
+const res = await rpc.command({ foo: 1 })
 console.log(res) // => { bar: 2 }
 ```
 
@@ -94,14 +94,14 @@ ns.register({
 })
 */
 
-rpc.onExampleCommand((stream) => {
+rpc.onCommand((stream) => {
   stream.on('data', (data) => {
     console.log('Received:', data)
   })
   stream.write({ response: 'pong' })
 })
 
-const duplex = rpc.exampleCommand()
+const duplex = rpc.command()
 duplex.write({ request: 'ping' })
 duplex.on('data', (data) => {
   console.log('Reply:', data)
