@@ -48,9 +48,9 @@ const HRPC = require(HRPC_DIR)
 const stream = new PassThrough()
 const rpc = new HRPC(stream)
 
-rpc.onExampleCommandA((data) => {
+rpc.onCommandA((data) => {
   console.log('command A request:', data)
   return { baz: 'quo', qux: data.foo + 1 }
 })
 
-rpc.exampleCommandA({ foo: 80, bar: 'imbar' }).then((response) => console.log('command A response:', response))
+rpc.commandA({ foo: 80, bar: 'imbar' }).then((response) => console.log('command A response:', response))

@@ -127,23 +127,23 @@ test('basic rpc', async (t) => {
 
   // request stream false - response stream false
 
-  rpc.onExampleCommandA((data) => {
+  rpc.onCommandA((data) => {
     t.is(data.bar, 'imbar', 'command-a request string is correct')
     return { baz: 'quo', qux: data.foo + 1 }
   })
-  const a = await rpc.exampleCommandA({ foo: 80, bar: 'imbar' })
+  const a = await rpc.commandA({ foo: 80, bar: 'imbar' })
   t.is(a.baz, 'quo', 'command-a response string is correct')
   t.is(a.qux, 81, 'command-a response uint is correct')
 
   // request stream true - response stream false
 
-  rpc.onExampleCommandB((stream) => {
+  rpc.onCommandB((stream) => {
     stream.on('data', (data) => {
       t.is(data.fred, 'imfred', 'command-b request string is correct')
     })
     return { tt: 22, cat: 'meow' }
   })
-  const streamB = rpc.exampleCommandB()
+  const streamB = rpc.commandB()
   streamB.write({ ffvii: 90, fred: 'imfred' })
   const b = await streamB.reply()
   t.is(b.tt, 22, 'command b response uint is correct')
@@ -151,12 +151,12 @@ test('basic rpc', async (t) => {
 
   // request stream false - response stream true
 
-  rpc.onExampleCommandC((stream) => {
+  rpc.onCommandC((stream) => {
     t.is(stream.data.cof, 99, 'request stream data is correct')
     t.is(stream.data.ham, 'tobe', 'request stream data is correct')
     stream.write({ klau: 'light', ger: 1500 })
   })
-  const streamC = rpc.exampleCommandC({ cof: 99, ham: 'tobe' })
+  const streamC = rpc.commandC({ cof: 99, ham: 'tobe' })
   streamC.on('data', (data) => {
     t.is(data.klau, 'light')
     t.is(data.ger, 1500)
@@ -164,14 +164,14 @@ test('basic rpc', async (t) => {
 
   // request stream true - response stream true
 
-  rpc.onExampleCommandD((stream) => {
+  rpc.onCommandD((stream) => {
     stream.on('data', (data) => {
       t.is(data.pol, 1, 'request stream data is correct')
       t.is(data.oth, 'par', 'request stream data is correct')
     })
     stream.write({ iag: 'ev', ofe: 22 })
   })
-  const streamD = rpc.exampleCommandD()
+  const streamD = rpc.commandD()
   streamD.on('data', (data) => {
     t.is(data.iag, 'ev', 'response stream data is correct')
     t.is(data.ofe, 22, 'response stream data is correct')
@@ -180,38 +180,38 @@ test('basic rpc', async (t) => {
 
   // send: true
 
-  rpc.onExampleCommandE((data) => {
+  rpc.onCommandE((data) => {
     t.is(data.mac, 1, 'request send data is correct')
     t.is(data.earl, 2, 'request send data is correct')
   })
 
-  rpc.exampleCommandE({ mac: 1, earl: 2 })
+  rpc.commandE({ mac: 1, earl: 2 })
 
   // send: true, no args
 
-  rpc.onExampleCommandF((data) => {
+  rpc.onCommandF((data) => {
     t.is(data, null)
   })
 
-  rpc.exampleCommandF()
+  rpc.commandF()
 
   // request stream false - response stream false, no args
 
-  rpc.onExampleCommandG((data) => {
+  rpc.onCommandG((data) => {
     t.is(data, null)
     return { far: 99, boo: 'loo' }
   })
-  const g = await rpc.exampleCommandG({ foo: 80, bar: 'imbar' })
+  const g = await rpc.commandG({ foo: 80, bar: 'imbar' })
   t.is(g.boo, 'loo', 'command-g response string is correct')
   t.is(g.far, 99, 'command-g response uint is correct')
 
   // request stream false - response stream true, no args
 
-  rpc.onExampleCommandH((stream) => {
+  rpc.onCommandH((stream) => {
     t.is(stream.data, null)
     stream.write({ lee: 'paw', perry: 777 })
   })
-  const streamH = rpc.exampleCommandH()
+  const streamH = rpc.commandH()
   streamH.on('data', (data) => {
     t.is(data.lee, 'paw')
     t.is(data.perry, 777)
