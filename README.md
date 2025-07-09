@@ -22,8 +22,9 @@ npm install hrpc
 Place your Hyperschema and HRPC definitions in the appropriate directories.
 
 ```js
-const p = require('path')
 const HRPCBuilder = require('hrpc')
+const Hyperschema = require('hyperschema')
+const path = require('path')
 
 const SCHEMA_DIR = path.join(__dirname, 'spec', 'hyperschema')
 const HRPC_DIR = path.join(__dirname, 'spec', 'hrpc')
@@ -35,16 +36,16 @@ const schemaNs = schema.namespace('example')
 schemaNs.register({
   name: 'command-request',
   fields: [
-    { name: 'foo', type: 'uint' },
+    { name: 'foo', type: 'uint' }
   ]
 })
 
 schemaNs.register({
-  name: 'command-response,
+  name: 'command-response',
   fields: [
     { name: 'bar', type: 'string' }
   ]
-}
+})
 Hyperschema.toDisk(schema)
 
 // Load and build interface
@@ -67,14 +68,19 @@ HRPCBuilder.toDisk(builder)
 ```js
 const { PassThrough } = require('bare-stream')
 const HRPC = require('./spec/hrpc') // generated rpc
+const stream = new PassThrough()
 const rpc = new HRPC(stream)
 
-rpc.onCommand((data) => {
-  return { bar: data.foo + 1 }
-})
+async function main () {
+  rpc.onCommand((data) => {
+    return { bar: `${data.foo + 1}` }
+  })
 
-const res = await rpc.command({ foo: 1 })
-console.log(res) // => { bar: 2 }
+  const res = await rpc.command({ foo: 1 })
+  console.log(res) // => { bar: 2 }
+}
+
+main ()
 ```
 
 Example for duplex command:
