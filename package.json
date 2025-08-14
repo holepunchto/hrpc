@@ -40,7 +40,6 @@
   "dependencies": {
     "b4a": "^1.6.7",
     "bare-rpc": "^0.2.0",
-    "brittle": "^3.13.1",
     "hyperschema": "^1.10.4",
     "streamx": "^2.22.0"
   },
@@ -48,6 +47,7 @@
     "bare-fs": "^4.1.2",
     "bare-path": "^3.0.0",
     "bare-stream": "^2.6.5",
+    "brittle": "^3.18.0",
     "standard": "^17.1.2"
   }
 }
