@@ -42,6 +42,18 @@ ns.register({
   }
 })
 
+ns.register({
+  name: 'command-b',
+  request: {
+    name: 'string',
+    stream: false
+  },
+  response: {
+    name: 'string',
+    stream: false
+  }
+})
+
 HRPCBuilder.toDisk(hrpc)
 
 const HRPC = require(HRPC_DIR)
@@ -54,3 +66,10 @@ rpc.onCommandA((data) => {
 })
 
 rpc.commandA({ foo: 80, bar: 'imbar' }).then((response) => console.log('command A response:', response))
+
+rpc.onCommandB((data) => {
+  console.log('command B request:', data)
+  return data
+})
+
+rpc.commandB('hello').then((response) => console.log('command B response:', response))
