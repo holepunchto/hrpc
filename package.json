@@ -1,6 +1,6 @@
 {
   "name": "hrpc",
-  "version": "4.0.3",
+  "version": "4.1.0",
   "files": [
     "lib/*.js",
     "builder.mjs",
