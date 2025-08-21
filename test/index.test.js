@@ -21,7 +21,7 @@ test.hook('copy runtime', async () => {
 })
 
 test('basic rpc', async (t) => {
-  t.plan(23)
+  t.plan(31)
   t.teardown(async () => {
     await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
   })
@@ -115,6 +115,54 @@ test('basic rpc', async (t) => {
     },
     response: {
       name: '@example/command-h-response',
+      stream: true
+    }
+  })
+
+  ns.register({
+    name: 'command-i',
+    request: {
+      name: 'string',
+      stream: false
+    },
+    response: {
+      name: 'uint',
+      stream: false
+    }
+  })
+
+  ns.register({
+    name: 'command-j',
+    request: {
+      name: 'fixed32',
+      stream: true
+    },
+    response: {
+      name: 'bool',
+      stream: false
+    }
+  })
+
+  ns.register({
+    name: 'command-k',
+    request: {
+      name: 'bool',
+      stream: false
+    },
+    response: {
+      name: 'int',
+      stream: true
+    }
+  })
+
+  ns.register({
+    name: 'command-l',
+    request: {
+      name: 'fixed32',
+      stream: true
+    },
+    response: {
+      name: 'bool',
       stream: true
     }
   })
@@ -216,6 +264,53 @@ test('basic rpc', async (t) => {
     t.is(data.lee, 'paw')
     t.is(data.perry, 777)
   })
+
+  // primitive, request stream false, response stream false
+
+  rpc.onCommandI((request) => {
+    t.is(request, 'ping')
+    return 33
+  })
+  const i = await rpc.commandI('ping')
+  t.is(i, 33)
+
+  // primitive, request stream true, response stream false
+
+  rpc.onCommandJ((stream) => {
+    stream.on('data', (data) => {
+      t.ok(data.equals(Buffer.alloc(32)), 'command-J request buffer primitive is correct')
+    })
+    return false
+  })
+  const streamJ = rpc.commandJ()
+  streamJ.write(Buffer.alloc(32))
+  const j = await streamJ.reply()
+  t.is(j, false, 'command j response boolean is correct')
+
+  // primitive, request stream false, response stream true
+
+  rpc.onCommandK((stream) => {
+    t.is(stream.data, true, 'request stream primitive data is correct')
+    stream.write(451)
+  })
+  const streamK = rpc.commandK(true)
+  streamK.on('data', (data) => {
+    t.is(data, 451)
+  })
+
+  // primitive, request stream true - response stream true
+
+  rpc.onCommandL((stream) => {
+    stream.on('data', (data) => {
+      t.ok(data.equals(Buffer.alloc(32)))
+    })
+    stream.write(false)
+  })
+  const streamL = rpc.commandL()
+  streamL.on('data', (data) => {
+    t.is(data, false)
+  })
+  streamL.write(Buffer.alloc(32))
 })
 
 test('register rpc twice', async (t) => {
