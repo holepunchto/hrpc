@@ -65,11 +65,15 @@ rpc.onCommandA((data) => {
   return { baz: 'quo', qux: data.foo + 1 }
 })
 
-rpc.commandA({ foo: 80, bar: 'imbar' }).then((response) => console.log('command A response:', response))
+rpc
+  .commandA({ foo: 80, bar: 'imbar' })
+  .then((response) => console.log('command A response:', response))
 
 rpc.onCommandB((data) => {
   console.log('command B request:', data)
   return data
 })
 
-rpc.commandB('hello').then((response) => console.log('command B response:', response))
+rpc
+  .commandB('hello')
+  .then((response) => console.log('command B response:', response))

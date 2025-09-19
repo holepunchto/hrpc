@@ -35,16 +35,12 @@ const schemaNs = schema.namespace('example')
 
 schemaNs.register({
   name: 'command-request',
-  fields: [
-    { name: 'foo', type: 'uint' }
-  ]
+  fields: [{ name: 'foo', type: 'uint' }]
 })
 
 schemaNs.register({
   name: 'command-response',
-  fields: [
-    { name: 'bar', type: 'string' }
-  ]
+  fields: [{ name: 'bar', type: 'string' }]
 })
 Hyperschema.toDisk(schema)
 
@@ -71,7 +67,7 @@ const HRPC = require('./spec/hrpc') // generated rpc
 const stream = new PassThrough()
 const rpc = new HRPC(stream)
 
-async function main () {
+async function main() {
   rpc.onCommand((data) => {
     return { bar: `${data.foo + 1}` }
   })
@@ -80,7 +76,7 @@ async function main () {
   console.log(res) // => { bar: 2 }
 }
 
-main ()
+main()
 ```
 
 Example for duplex command:
@@ -130,7 +126,6 @@ ns.register({
 Redefining an already-registered command with different schemas or stream types will throw an exception:
 
 ```js
-
 // First, command is declared as an async call with return value
 ns.register({
   name: 'command',
