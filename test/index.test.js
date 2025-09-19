@@ -17,13 +17,16 @@ test.hook('copy runtime', async () => {
   await fs.promises.mkdir(p.dirname(runtimeLibPath), { recursive: true })
   await fs.promises.copyFile(p.resolve(dir, '../runtime.cjs'), runtimePath)
   await fs.promises.copyFile(p.resolve(dir, '../runtime.mjs'), runtimePathEsm)
-  await fs.promises.copyFile(p.resolve(dir, '..', 'lib', 'stream.js'), runtimeLibPath)
+  await fs.promises.copyFile(
+    p.resolve(dir, '..', 'lib', 'stream.js'),
+    runtimeLibPath
+  )
 })
 
 test('basic rpc', async (t) => {
   t.plan(31)
   t.teardown(async () => {
-    await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
+    //await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
   })
 
   registerSchema()
@@ -278,7 +281,10 @@ test('basic rpc', async (t) => {
 
   rpc.onCommandJ((stream) => {
     stream.on('data', (data) => {
-      t.ok(data.equals(Buffer.alloc(32)), 'command-J request buffer primitive is correct')
+      t.ok(
+        data.equals(Buffer.alloc(32)),
+        'command-J request buffer primitive is correct'
+      )
     })
     return false
   })

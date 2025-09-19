@@ -3,7 +3,7 @@ const Hyperschema = require('hyperschema')
 
 const SCHEMA_DIR = p.join(__dirname, 'spec', 'hyperschema')
 
-function registerSchema () {
+function registerSchema() {
   const schema = Hyperschema.from(SCHEMA_DIR)
   const ns1 = schema.namespace('example')
 
