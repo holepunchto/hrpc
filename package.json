@@ -41,7 +41,7 @@
   "description": "",
   "dependencies": {
     "b4a": "^1.6.7",
-    "bare-rpc": "^0.2.0",
+    "bare-rpc": "^1.1.0",
     "hyperschema": "^1.10.4",
     "streamx": "^2.22.0"
   },
