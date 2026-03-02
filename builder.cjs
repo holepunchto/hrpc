@@ -167,8 +167,8 @@ module.exports = class HRPC {
     return new this(schema, hrpcJson, opts)
   }
 
-  toCode({ esm = this.constructor.esm, filename } = {}) {
-    return generateCode(this, { esm, filename })
+  toCode({ esm = this.constructor.esm, flat = false, filename } = {}) {
+    return generateCode(this, { esm, flat, filename })
   }
 
   static toDisk(hrpc, hrpcDir, opts = {}) {
