@@ -3,3 +3,4 @@ package-lock.json
 spec/
 definition.js
 generated.js
+test/swift-workspace/

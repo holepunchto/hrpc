@@ -6,7 +6,8 @@
     "builder.mjs",
     "builder.cjs",
     "runtime.mjs",
-    "runtime.cjs"
+    "runtime.cjs",
+    "swift.cjs"
   ],
   "imports": {
     "path": {
@@ -27,7 +28,8 @@
     "./runtime": {
       "import": "./runtime.mjs",
       "require": "./runtime.cjs"
-    }
+    },
+    "./swift": "./swift.cjs"
   },
   "scripts": {
     "test": "brittle test/index.test.js",
@@ -43,7 +45,7 @@
   "dependencies": {
     "b4a": "^1.6.7",
     "bare-rpc": "^1.1.0",
-    "hyperschema": "^1.10.4",
+    "hyperschema": "github:holepunchto/hyperschema#swift-code-gen-uint",
     "streamx": "^2.22.0"
   },
   "devDependencies": {

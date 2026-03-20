@@ -70,7 +70,7 @@ let package = Package(
   platforms: [.macOS(.v11), .iOS(.v14)],
   dependencies: [
     .package(url: "${BARE_RPC_SWIFT_URL}", branch: "main"),
-    .package(path: "${schemaPackagePath}")
+    .package(path: "${schemaPackagePath.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")
   ],
   targets: [
     .target(
