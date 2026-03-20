@@ -36,7 +36,8 @@
     "test:bare": "bare test/index.test.js",
     "format": "prettier --write .",
     "lint": "prettier --check .",
-    "test:swift": "brittle test/swift-codegen.test.js"
+    "test:swift": "brittle test/swift-codegen.test.js",
+    "test:cross-language:swift": "brittle test/cross-language.test.js"
   },
   "keywords": [],
   "author": "",

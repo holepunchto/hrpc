@@ -42,3 +42,4 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npm run test:swift
+      - run: npm run test:cross-language:swift
