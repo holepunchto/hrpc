@@ -129,26 +129,29 @@ RunLoop.main.run()
   t.ok(result.stdout.includes('OK'), 'send-only printed OK')
 })
 
-test('swift: multiple handlers dispatch correctly', { skip: isWindows }, (t) => {
-  const schema = makeSchema()
-  const hrpc = {
-    handlers: [
-      {
-        id: 0,
-        name: '@test/echo',
-        request: { name: '@test/echo-request', stream: false },
-        response: { name: '@test/echo-response', stream: false }
-      },
-      {
-        id: 1,
-        name: '@test/notify',
-        request: { name: '@test/notify-request', stream: false, send: true },
-        response: null
-      }
-    ]
-  }
+test(
+  'swift: multiple handlers dispatch correctly',
+  { skip: isWindows },
+  (t) => {
+    const schema = makeSchema()
+    const hrpc = {
+      handlers: [
+        {
+          id: 0,
+          name: '@test/echo',
+          request: { name: '@test/echo-request', stream: false },
+          response: { name: '@test/echo-response', stream: false }
+        },
+        {
+          id: 1,
+          name: '@test/notify',
+          request: { name: '@test/notify-request', stream: false, send: true },
+          response: null
+        }
+      ]
+    }
 
-  const main = `
+    const main = `
 import Foundation
 import BareRPC
 
@@ -185,10 +188,11 @@ Task {
 RunLoop.main.run()
 `
 
-  const result = runSwift(schema, hrpc, main)
-  t.ok(result.ok, result.stderr)
-  t.ok(result.stdout.includes('OK'), 'multiple handlers printed OK')
-})
+    const result = runSwift(schema, hrpc, main)
+    t.ok(result.ok, result.stderr)
+    t.ok(result.stdout.includes('OK'), 'multiple handlers printed OK')
+  }
+)
 
 test('swift: handler.id is used, not array index', { skip: isWindows }, (t) => {
   const schema = makeSchema()

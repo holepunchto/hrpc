@@ -4,79 +4,27 @@ const test = require('brittle')
 const c = require('compact-encoding')
 const SwiftHyperschema = require('hyperschema/swift')
 const { runSwift } = require('./helpers/swift')
+const m = require('bare-rpc/messages')
 
 const isWindows = process.platform === 'win32'
 
-// --- Wire format helpers (matching bare-rpc framing) ---
+// --- Wire format helpers ---
 
-// Encode a bare-rpc request frame: [uint32 frameLen][uint type=1][uint id][uint command][uint stream=0][buffer data]
 function encodeRequestFrame(id, command, payloadBuffer) {
-  // First pass: compute header size
-  const state = c.state()
-  c.uint32.preencode(state, 0) // frame length placeholder
-  c.uint.preencode(state, 1) // type = REQUEST
-  c.uint.preencode(state, id)
-  c.uint.preencode(state, command)
-  c.uint.preencode(state, 0) // stream = 0
-  c.buffer.preencode(state, payloadBuffer)
-
-  // Second pass: encode
-  state.buffer = Buffer.alloc(state.end)
-  state.start = 0
-
-  const frameLenPos = 0
-  c.uint32.encode(state, 0) // placeholder
-  const bodyStart = state.start
-
-  c.uint.encode(state, 1) // type = REQUEST
-  c.uint.encode(state, id)
-  c.uint.encode(state, command)
-  c.uint.encode(state, 0) // stream = 0
-  c.buffer.encode(state, payloadBuffer)
-
-  const bodyLen = state.start - bodyStart
-
-  // Patch frame length
-  const saved = state.start
-  state.start = frameLenPos
-  c.uint32.encode(state, bodyLen)
-  state.start = saved
-
-  return state.buffer
+  const message = { type: 1, id, command, stream: 0, data: payloadBuffer }
+  const header = c.encode(m.header, message)
+  return payloadBuffer
+    ? Buffer.concat([header, payloadBuffer])
+    : Buffer.from(header)
 }
 
-// Encode an event frame (id=0)
 function encodeEventFrame(command, payloadBuffer) {
   return encodeRequestFrame(0, command, payloadBuffer)
 }
 
-// Decode a bare-rpc message from a frame buffer
 function decodeFrame(buf) {
   const state = c.state(0, buf.length, buf)
-  c.uint32.decode(state) // frame length
-  const type = c.uint.decode(state)
-  const id = c.uint.decode(state)
-
-  if (type === 1) {
-    // REQUEST
-    const command = c.uint.decode(state)
-    const stream = c.uint.decode(state)
-    const data = stream === 0 ? c.buffer.decode(state) : null
-    return { type, id, command, stream, data }
-  } else if (type === 2) {
-    // RESPONSE
-    const isErr = c.bool.decode(state)
-    const stream = c.uint.decode(state)
-    if (isErr) {
-      const message = c.utf8.decode(state)
-      const code = c.utf8.decode(state)
-      const errno = c.int.decode(state)
-      return { type, id, stream, error: { message, code, errno }, data: null }
-    }
-    const data = stream === 0 ? c.buffer.decode(state) : null
-    return { type, id, stream, error: null, data }
-  }
-  throw new Error('Unknown message type: ' + type)
+  return m.message.decode(state)
 }
 
 // --- Payload codecs (matching hyperschema-generated struct encodings) ---
