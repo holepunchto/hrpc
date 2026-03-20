@@ -21,8 +21,8 @@ let package = Package(
   name: "HRPCTest",
   platforms: [.macOS(.v11), .iOS(.v14)],
   dependencies: [
-    .package(url: "git@github.com:holepunchto/bare-rpc-swift.git", branch:"main"),
-    .package(url: "git@github.com:holepunchto/compact-encoding-swift.git", branch: "main")
+    .package(url: "https://github.com/holepunchto/bare-rpc-swift", branch:"main"),
+    .package(url: "https://github.com/holepunchto/compact-encoding-swift", branch: "main")
   ],
   targets: [
     .executableTarget(
