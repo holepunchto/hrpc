@@ -403,3 +403,43 @@ test('register rpc twice', async (t) => {
     })
   }, 'cannot alter response stream')
 })
+
+test('a response stream survives a burst wider than its high water mark', async (t) => {
+  registerSchema()
+
+  const hrpcDir = p.join(__dirname, 'spec', 'hrpc-burst')
+  const hrpc = HRPCBuilder.from(SCHEMA_DIR, hrpcDir)
+
+  hrpc.namespace('example').register({
+    name: 'burst',
+    request: { name: 'bool', stream: false },
+    response: { name: 'uint', stream: true }
+  })
+
+  HRPCBuilder.toDisk(hrpc)
+
+  const HRPC = require(hrpcDir)
+  const rpc = new HRPC(new PassThrough())
+
+  // streamx buffers 16384 and bills every non-typed-array at 1024, so a
+  // decoded readable holds exactly 16 frames — write past that in one tick
+  const expected = []
+  for (let i = 0; i < 64; i++) expected.push(i)
+
+  rpc.onBurst((stream) => {
+    for (const i of expected) stream.write(i)
+    stream.end()
+  })
+
+  const received = []
+  const stream = rpc.burst(true)
+  stream.on('data', (data) => received.push(data))
+
+  // race a timer so a regression reports what it lost instead of hanging
+  await Promise.race([
+    new Promise((resolve) => stream.on('end', resolve)),
+    new Promise((resolve) => setTimeout(resolve, 2000))
+  ])
+
+  t.alike(received, expected, 'every frame of the burst arrives')
+})
