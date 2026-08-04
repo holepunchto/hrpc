@@ -121,7 +121,11 @@ module.exports = class HRPC {
 
     const id = Number.isInteger(description.id)
       ? description.id
-      : this.currentOffset++
+      : existingByName
+        ? existingByName.id
+        : this.currentOffset++
+
+    if (id >= this.currentOffset) this.currentOffset = id + 1
 
     const handler = {
       id,
