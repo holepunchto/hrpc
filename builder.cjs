@@ -63,8 +63,8 @@ module.exports = class HRPC {
     const existingById = Number.isInteger(description.id)
       ? this.handlersById.get(description.id)
       : null
-    if (existingByName && existingById) {
-      if (existingByName !== existingById)
+    if (existingByName) {
+      if (existingById && existingByName !== existingById)
         throw new Error('ID/Name mismatch for handler: ' + fqn)
       if (
         Number.isInteger(description.id) &&
