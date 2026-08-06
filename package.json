@@ -35,6 +35,10 @@
     "format": "prettier --write .",
     "lint": "prettier --check ."
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holepunchto/hrpc.git"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
