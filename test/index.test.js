@@ -5,6 +5,8 @@ const { PassThrough } = require('bare-stream')
 const { registerSchema } = require('./helper.js')
 const HRPCBuilder = require('../builder.cjs')
 
+require('./vectors.test.js')
+
 const SCHEMA_DIR = p.join(__dirname, 'spec', 'hyperschema')
 const HRPC_DIR = p.join(__dirname, 'spec', 'hrpc')
 
