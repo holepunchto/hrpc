@@ -63,8 +63,8 @@ module.exports = class HRPC {
     const existingById = Number.isInteger(description.id)
       ? this.handlersById.get(description.id)
       : null
-    if (existingByName && existingById) {
-      if (existingByName !== existingById)
+    if (existingByName) {
+      if (existingById && existingByName !== existingById)
         throw new Error('ID/Name mismatch for handler: ' + fqn)
       if (
         Number.isInteger(description.id) &&
@@ -121,7 +121,11 @@ module.exports = class HRPC {
 
     const id = Number.isInteger(description.id)
       ? description.id
-      : this.currentOffset++
+      : existingByName
+        ? existingByName.id
+        : this.currentOffset++
+
+    if (id >= this.currentOffset) this.currentOffset = id + 1
 
     const handler = {
       id,

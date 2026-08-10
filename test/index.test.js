@@ -405,3 +405,180 @@ test('register rpc twice', async (t) => {
     })
   }, 'cannot alter response stream')
 })
+
+const ID_TEST_ROUTE = {
+  request: { name: '@example/command-f-request', stream: false },
+  response: { name: '@example/command-g-response', stream: false }
+}
+
+function buildRoutes(hrpcDir, names, opts) {
+  const hrpc = HRPCBuilder.from(SCHEMA_DIR, hrpcDir, opts)
+  const ns = hrpc.namespace('example')
+  for (const name of names) {
+    ns.register(typeof name === 'string' ? { ...ID_TEST_ROUTE, name } : name)
+  }
+  HRPCBuilder.toDisk(hrpc)
+  return JSON.parse(fs.readFileSync(p.join(hrpcDir, 'hrpc.json'), 'utf-8'))
+}
+
+const routeIds = (json) => json.schema.map((e) => [e.name, e.id])
+
+test('a route inserted mid-list takes the next free id', async (t) => {
+  t.plan(4)
+
+  const hrpcDir = p.join(__dirname, 'spec', 'hrpc-insert')
+  t.teardown(async () => {
+    await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
+  })
+
+  registerSchema()
+
+  t.alike(
+    routeIds(buildRoutes(hrpcDir, ['alpha', 'beta', 'gamma'])),
+    [
+      ['@example/alpha', 0],
+      ['@example/beta', 1],
+      ['@example/gamma', 2]
+    ],
+    'ids are assigned in registration order'
+  )
+
+  t.alike(
+    routeIds(buildRoutes(hrpcDir, ['alpha', 'beta', 'first', 'gamma'])),
+    [
+      ['@example/alpha', 0],
+      ['@example/beta', 1],
+      ['@example/gamma', 2],
+      ['@example/first', 3]
+    ],
+    'an inserted route clears the ids already on disk'
+  )
+
+  const twice = buildRoutes(hrpcDir, [
+    'alpha',
+    'second',
+    'beta',
+    'first',
+    'gamma'
+  ])
+  t.alike(
+    routeIds(twice),
+    [
+      ['@example/alpha', 0],
+      ['@example/beta', 1],
+      ['@example/gamma', 2],
+      ['@example/first', 3],
+      ['@example/second', 4]
+    ],
+    'a second insert clears the id the first one took'
+  )
+
+  t.alike(
+    buildRoutes(hrpcDir, ['alpha', 'second', 'beta', 'first', 'gamma']),
+    twice,
+    'rebuilding an unchanged list changes nothing'
+  )
+})
+
+test('the id counter starts past every id it has seen', async (t) => {
+  t.plan(3)
+
+  t.teardown(async () => {
+    await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
+  })
+
+  registerSchema()
+
+  const explicitDir = p.join(__dirname, 'spec', 'hrpc-explicit')
+  t.alike(
+    routeIds(
+      buildRoutes(explicitDir, [
+        { ...ID_TEST_ROUTE, name: 'alpha', id: 10 },
+        'beta'
+      ])
+    ),
+    [
+      ['@example/alpha', 10],
+      ['@example/beta', 11]
+    ],
+    'an explicit id moves the counter past itself'
+  )
+
+  const offsetDir = p.join(__dirname, 'spec', 'hrpc-offset')
+  t.alike(
+    routeIds(buildRoutes(offsetDir, ['alpha', 'beta'], { offset: 100 })),
+    [
+      ['@example/alpha', 100],
+      ['@example/beta', 101]
+    ],
+    'the offset option is the first id'
+  )
+
+  t.alike(
+    routeIds(buildRoutes(offsetDir, ['alpha', 'inserted', 'beta'])),
+    [
+      ['@example/alpha', 100],
+      ['@example/beta', 101],
+      ['@example/inserted', 102]
+    ],
+    'an offset survives a rebuild that does not repeat it'
+  )
+})
+
+test('a known route cannot be moved to another id', async (t) => {
+  t.plan(3)
+
+  const hrpcDir = p.join(__dirname, 'spec', 'hrpc-reassign')
+  t.teardown(async () => {
+    await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
+  })
+
+  registerSchema()
+
+  buildRoutes(hrpcDir, ['alpha', 'beta'])
+
+  // a fresh builder per case, so one rejection cannot skew the next
+  const reregister = (id) => () =>
+    HRPCBuilder.from(SCHEMA_DIR, hrpcDir)
+      .namespace('example')
+      .register({ ...ID_TEST_ROUTE, name: 'alpha', id })
+
+  t.exception(reregister(99), 'a free id is refused for a route that has one')
+  t.exception(reregister(1), 'an id held by another route is refused too')
+  t.execution(reregister(0), 'the id already on disk is accepted')
+})
+
+test('an hrpc.json that already holds a duplicate id still loads', async (t) => {
+  t.plan(1)
+
+  const hrpcDir = p.join(__dirname, 'spec', 'hrpc-duplicate')
+  t.teardown(async () => {
+    await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
+  })
+
+  registerSchema()
+
+  fs.mkdirSync(hrpcDir, { recursive: true })
+  fs.writeFileSync(
+    p.join(hrpcDir, 'hrpc.json'),
+    JSON.stringify({
+      version: 1,
+      schema: [
+        { ...ID_TEST_ROUTE, id: 0, name: '@example/alpha', version: 0 },
+        { ...ID_TEST_ROUTE, id: 1, name: '@example/beta', version: 0 },
+        { ...ID_TEST_ROUTE, id: 1, name: '@example/stolen', version: 1 }
+      ]
+    })
+  )
+
+  t.alike(
+    routeIds(buildRoutes(hrpcDir, ['alpha', 'beta', 'stolen', 'fresh'])),
+    [
+      ['@example/alpha', 0],
+      ['@example/beta', 1],
+      ['@example/stolen', 1],
+      ['@example/fresh', 2]
+    ],
+    'the duplicate is kept and a new route lands past it'
+  )
+})
