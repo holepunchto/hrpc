@@ -1,7 +1,9 @@
 const p = require('path')
 const fs = require('fs')
 const test = require('brittle')
-const { PassThrough } = require('bare-stream')
+const c = require('compact-encoding')
+const m = require('bare-rpc/messages')
+const { Duplex, PassThrough } = require('bare-stream')
 const { registerSchema } = require('./helper.js')
 const HRPCBuilder = require('../builder.cjs')
 
@@ -9,6 +11,54 @@ require('./vectors.test.js')
 
 const SCHEMA_DIR = p.join(__dirname, 'spec', 'hyperschema')
 const HRPC_DIR = p.join(__dirname, 'spec', 'hrpc')
+const DISPATCH_DIR = p.join(__dirname, 'spec', 'dispatch')
+
+const REQUEST = 1
+
+// A peer that keeps the wire instead of speaking it, so a test can read the
+// command every outgoing frame carries and hand it frames of its own
+class Wire extends Duplex {
+  constructor() {
+    super()
+    this._chunks = []
+    this._onwrite = null
+  }
+
+  _write(data, encoding, cb) {
+    this._chunks.push(data)
+    const onwrite = this._onwrite
+    this._onwrite = null
+    if (onwrite) onwrite()
+    cb(null)
+  }
+
+  _read() {}
+
+  async commands(n) {
+    let frames = this._decode()
+    while (frames.length < n) {
+      await new Promise((resolve) => {
+        this._onwrite = resolve
+      })
+      frames = this._decode()
+    }
+    return frames.map((frame) => frame.command)
+  }
+
+  _decode() {
+    const buffer = Buffer.concat(this._chunks)
+    const state = c.state(0, buffer.byteLength, buffer)
+    const frames = []
+    while (state.start < state.end) {
+      try {
+        frames.push(m.message.decode(state))
+      } catch {
+        break // the frame is still half written
+      }
+    }
+    return frames
+  }
+}
 
 test.hook('copy runtime', async () => {
   const dir = __dirname
@@ -445,3 +495,73 @@ test('a response stream survives a burst wider than its high water mark', async 
 
   t.alike(received, expected, 'every frame of the burst arrives')
 })
+
+test('commands are dispatched by declared id', async (t) => {
+  t.plan(3)
+  t.teardown(async () => {
+    await fs.promises.rm(p.join(__dirname, 'spec'), { recursive: true })
+  })
+
+  registerSchema()
+
+  const hrpc = HRPCBuilder.from(SCHEMA_DIR, DISPATCH_DIR)
+  const ns = hrpc.namespace('example')
+
+  // Declared out of order and with a gap, so no id equals its position
+  ns.register({
+    id: 1,
+    name: 'command-one',
+    request: { name: 'uint', stream: false },
+    response: { name: 'uint', stream: false }
+  })
+
+  ns.register({
+    id: 0,
+    name: 'command-zero',
+    request: { name: 'uint', send: true }
+  })
+
+  ns.register({
+    id: 5,
+    name: 'command-five',
+    request: { name: 'uint', send: true }
+  })
+
+  HRPCBuilder.toDisk(hrpc)
+
+  const HRPC = require(DISPATCH_DIR)
+  const wire = new Wire()
+  const rpc = new HRPC(wire)
+
+  rpc.commandOne(11)
+  rpc.commandZero(22)
+  rpc.commandFive(33)
+
+  t.alike(await wire.commands(3), [1, 0, 5], 'client sends declared ids')
+
+  const one = new Promise((resolve) =>
+    rpc.onCommandOne((request) => {
+      resolve(request)
+      return request + 1
+    })
+  )
+  const zero = new Promise((resolve) => rpc.onCommandZero(resolve))
+
+  wire.push(requestFrame(1, 1, c.encode(c.uint, 11)))
+  wire.push(requestFrame(2, 0, c.encode(c.uint, 22)))
+
+  t.is(await one, 11, 'command 1 is served by the handler declared with id 1')
+  t.is(await zero, 22, 'command 0 is served by the handler declared with id 0')
+})
+
+// bare-rpc writes a header and its payload as two writes, so mirror that here
+function requestFrame(id, command, data) {
+  const header = c.encode(m.header, {
+    type: REQUEST,
+    id,
+    command,
+    stream: 0,
+    data
+  })
+  return Buffer.concat([header, data])
+}
