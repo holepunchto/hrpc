@@ -50,6 +50,12 @@ module.exports = class HRPC {
         const description = hrpcJson.schema[i]
         this.register(description.name, description)
       }
+      // Start past every id already on disk so a later register() without an
+      // explicit id cannot collide with a persisted route (#11).
+      for (const handler of this.handlers) {
+        if (handler.id >= this.currentOffset)
+          this.currentOffset = handler.id + 1
+      }
     }
     this.initializing = false
   }
@@ -119,9 +125,17 @@ module.exports = class HRPC {
       this.version += 1
     }
 
-    const id = Number.isInteger(description.id)
+    // Known names reuse their persisted id so re-registration order does not
+    // burn counter values (and new names in the middle do not collide) (#11).
+    const explicit = Number.isInteger(description.id)
+    const id = explicit
       ? description.id
-      : this.currentOffset++
+      : existingByName
+        ? existingByName.id
+        : this.currentOffset++
+    if (!explicit && !existingByName && this.handlersById.has(id)) {
+      throw new Error('ID ' + id + ' already in use, cannot assign to: ' + fqn)
+    }
 
     const handler = {
       id,

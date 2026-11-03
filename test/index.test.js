@@ -445,3 +445,45 @@ test('a response stream survives a burst wider than its high water mark', async 
 
   t.alike(received, expected, 'every frame of the burst arrives')
 })
+
+test('inserting a route mid-schema does not reuse an existing id', async (t) => {
+  // https://github.com/holepunchto/hrpc/issues/11
+  const root = await fs.promises.mkdtemp(
+    p.join(require('os').tmpdir(), 'hrpc-')
+  )
+  const schemaDir = p.join(root, 'hyperschema')
+  const hrpcDir = p.join(root, 'hrpc')
+  t.teardown(() => fs.promises.rm(root, { recursive: true, force: true }))
+
+  const Hyperschema = require('hyperschema')
+  const schema = Hyperschema.from(schemaDir)
+  schema.namespace('t').register({ name: 'empty', fields: [] })
+  Hyperschema.toDisk(schema)
+
+  function build(names) {
+    const builder = HRPCBuilder.from(schemaDir, hrpcDir)
+    const api = builder.namespace('t')
+    for (const name of names) {
+      api.register({
+        name,
+        request: { name: '@t/empty', stream: false },
+        response: { name: '@t/empty', stream: false }
+      })
+    }
+    HRPCBuilder.toDisk(builder)
+    return JSON.parse(
+      fs.readFileSync(p.join(hrpcDir, 'hrpc.json'), 'utf-8')
+    ).schema.map((e) => ({ id: e.id, name: e.name }))
+  }
+
+  build(['alpha', 'beta', 'gamma', 'delta'])
+  const inserted = build(['alpha', 'beta', 'inserted', 'gamma', 'delta'])
+
+  const ids = inserted.map((e) => e.id)
+  t.is(new Set(ids).size, ids.length, 'all ids are unique')
+  t.alike(
+    inserted.find((e) => e.name === '@t/inserted'),
+    { id: 4, name: '@t/inserted' },
+    'new route gets the next free id'
+  )
+})
